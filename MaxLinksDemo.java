@@ -17,7 +17,7 @@ import javax.swing.JPanel;
 public class MaxLinksDemo extends JFrame implements KeyListener {
 	public static final int WIDTH = 600;
 	public static final int HEIGHT = 600;
-	public static final int NUM_NODES = 5;
+	public static final int NUM_NODES = 10;
 
 	private ArrayList<Link> S1, S2;
 	private Set<Link> I1, I2;
