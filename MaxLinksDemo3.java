@@ -16,7 +16,7 @@ public class MaxLinksDemo3 extends JFrame implements KeyListener {
 
 	public static final int WIDTH = 600;
 	public static final int HEIGHT = 600;
-	public static final int NUM_NODES = 100;
+	public static final int NUM_NODES = 1000;
 
 	private Link primaryLink, primaryLink2; //primary link
 	private ArrayList<Link> links, links2; //all links
