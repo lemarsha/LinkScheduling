@@ -16,7 +16,7 @@ public class MaxLinksDemo3 extends JFrame implements KeyListener {
 
 	public static final int WIDTH = 600;
 	public static final int HEIGHT = 600;
-	public static final int NUM_NODES = 1000;
+	public static final int NUM_NODES = 500;
 
 	private Link primaryLink, primaryLink2; //primary link
 	private ArrayList<Link> links, links2; //all links
@@ -281,17 +281,34 @@ public class MaxLinksDemo3 extends JFrame implements KeyListener {
 	//verifies independence
 	public boolean checkIndependent() {
 		HashSet<Node> all_selected_nodes = new HashSet<Node>();
+		double rho_old = 0;
+		double rho_new;
 		for (Link l: selected_links) {
 			//check that all nodes unique
-			if (all_selected_nodes.contains(l.getSender())) return false;
+			if (all_selected_nodes.contains(l.getSender())) {
+				System.out.println("Sender already exists");
+				return false;
+			}
 			all_selected_nodes.add(l.getSender());
-			if (all_selected_nodes.contains(l.getReceiver())) return false;
+			if (all_selected_nodes.contains(l.getReceiver())) {
+				System.out.println("Receiver already exists");
+				return false;	
+			}
 			all_selected_nodes.add(l.getReceiver());
 			//check interference
 			selected_nodes.remove(l.getSender());
 			double ri = relativeInterference(selected_nodes,l);
 			selected_nodes.add(l.getSender());
-			if (ri>1-phi) return false;
+			if (ri>1) {
+				System.out.println("RI too high");
+				return false;
+			}
+			//check mutual distance
+			rho_new = (1+(rho_0-1)/Math.pow(1-Math.pow(l.getLength()/R,kappa),1/kappa))*l.getLength();
+			if (rho_new<rho_old) {
+				System.out.println("mutual distance not correct");
+				return false;
+			}	
 		}
 		return true;
 	}
@@ -311,6 +328,7 @@ public class MaxLinksDemo3 extends JFrame implements KeyListener {
 		}else {
 			reset();
 		}
+		System.out.println(selected_links.size());
 		System.out.println(checkIndependent());
 		repaint();
 	}
