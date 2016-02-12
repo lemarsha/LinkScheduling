@@ -37,11 +37,21 @@ public class Node {
 	public double getY() {
 		return scalar*y;
 	}
+		
+	public void setScalar(double scalar) {
+		this.scalar=scalar;
+	}
 	
 	//draws the node!
 	public void draw(Graphics g) {
 		g.setColor(Color.blue);
 		g.fillOval((int)(scalar*x) - SIZE/2, MaxLinksDemo.HEIGHT - (int)(scalar*y) - SIZE/2 , SIZE, SIZE);
+	}
+
+	//copy node
+	public Node copy() {
+		Node n = new Node(x,y);
+		return n;
 	}
 	
 	@Override
