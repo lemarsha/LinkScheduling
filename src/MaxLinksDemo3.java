@@ -52,7 +52,7 @@ public class MaxLinksDemo3 extends JFrame implements KeyListener {
 
 	//initialize links
 	@SuppressWarnings("unchecked")
-	private void setUp() {
+	public void setUp() {
 		//clear old vals
 		nodes.clear();
 		links.clear();
@@ -66,7 +66,7 @@ public class MaxLinksDemo3 extends JFrame implements KeyListener {
 	}
 
 	//set up stuff that gets edited
-	private void reset() {
+	public void reset() {
 		selected_nodes.clear();
 		selected_links.clear();
 		nodes2 = new ArrayList<Node>();
@@ -84,30 +84,31 @@ public class MaxLinksDemo3 extends JFrame implements KeyListener {
 	}
 
 	//initialize constants
-	private void setUpConstants() {
+	public void setUpConstants() {
 		phi = 0.5;
 		kappa = 4;
 		R = links.get(links.size()-1).getLength()+1;
+		System.out.println(R);
 		sigma = 16;
 		rho_0=1+Math.pow((sigma*(16*1.202+8*Math.pow(Math.PI,4)/90-6)/phi),1/kappa);
 	}
 
 	//generate primary link
-	private void generatePrimaryLink(){
-/*		Random r = new Random();
-		Node sender = new Node(r.nextInt(WIDTH), r.nextInt(HEIGHT));
-		Node receiver = new Node(r.nextInt(WIDTH), r.nextInt(HEIGHT));
+	public void generatePrimaryLink(){
+		//Random r = new Random();
+		//Node sender = new Node(r.nextInt(WIDTH), r.nextInt(HEIGHT));
+		//Node receiver = new Node(r.nextInt(WIDTH), r.nextInt(HEIGHT));
+		//primaryLink = new Link(sender, receiver);
+		//primaryLink.setPrimaryLink();
+	
+		Node sender=new Node(300,300);
+		Node receiver=new Node(350,350);
 		primaryLink = new Link(sender, receiver);
 		primaryLink.setPrimaryLink();
-	*/
-	Node sender=new Node(20,20);
-	Node receiver=new Node(40,40);
-	primaryLink = new Link(sender, receiver);
-	primaryLink.setPrimaryLink();
 	}
 
 	//generate nodes
-	private void generateNodes() {
+	public void generateNodes() {
 		Random r = new Random();
 		for (int i = 0; i<NUM_NODES; i++) {
 			Node n = new Node(r.nextInt(WIDTH), r.nextInt(HEIGHT));
@@ -116,7 +117,7 @@ public class MaxLinksDemo3 extends JFrame implements KeyListener {
 	}
 
 	//generate links
-	private void generateLinks() {
+	public void generateLinks() {
 		for(int i = 0; i<nodes.size(); i++) {
 			for(int j = 0; j<nodes.size(); j++) {
 				if (i!=j) {
@@ -141,9 +142,14 @@ public class MaxLinksDemo3 extends JFrame implements KeyListener {
 		primaryLink.getSender().scale(shortest);
 		primaryLink.getReceiver().scale(shortest);
 	}
+	
+	public double calcPhi() {
+		
+		return 0;
+	}
 
 	//removes links in first removal
-	private void firstRemoval(Link a, double rho) {
+	public void firstRemoval(Link a, double rho) {
 		ArrayList<Link> S_1 = new ArrayList<Link>();
 		for (Link l: links2) {
 			if (a.getSender().distanceToOtherNode(l.getSender())<rho*a.getLength()) S_1.add(l);
@@ -154,7 +160,7 @@ public class MaxLinksDemo3 extends JFrame implements KeyListener {
 	}
 
 	//removes links in second removal
-	private void secondRemoval(Link a, boolean use_primary) {
+	public void secondRemoval(Link a, boolean use_primary) {
 		ArrayList<Link> S_2 = new ArrayList<Link>();
 		if (a.getLength()<primaryLink.getLength() && use_primary) {
 			for (Link l: links2) {
@@ -171,7 +177,7 @@ public class MaxLinksDemo3 extends JFrame implements KeyListener {
 	}	
 
 	//calculates the relative interference of a set of nodes on another node
-	private double relativeInterference(HashSet<Node> W, Link a) {
+	public double relativeInterference(HashSet<Node> W, Link a) {
 		double totalInterference = 0;
 		for(Node w: W) {
 			totalInterference+=relativeInterference(w,a);
@@ -180,13 +186,13 @@ public class MaxLinksDemo3 extends JFrame implements KeyListener {
 	}
 
 	//calculates the relative inteference of a node on another node
-	private double relativeInterference(Node w, Link a) {
+	public double relativeInterference(Node w, Link a) {
 		return sigma*Math.pow(a.getLength()/w.distanceToOtherNode(a.getReceiver()),kappa)
 			/(1-Math.pow(a.getLength()/R,kappa));
 	}
 
 	//original algorithm
-	private void algorithmAAMISL() {
+	public void algorithmAAMISL() {
 		Link a; 
 		double rho;
 		while (links2.size()>0) {
@@ -200,9 +206,13 @@ public class MaxLinksDemo3 extends JFrame implements KeyListener {
 			secondRemoval(a,false);
 		}
 	}
+	
+	double calcrho(Link a) {
+		return 1+(rho_0-1)/Math.pow(1-Math.pow(a.getLength()/R,kappa),1/kappa);
+	}
 
 	//algorithm with primary link
-	private void algorithmPLMISL() {
+	public void algorithmPLMISL() {
 		Link a;
 		double rho;
 		boolean first=true;
@@ -214,7 +224,7 @@ public class MaxLinksDemo3 extends JFrame implements KeyListener {
 					a.select();
 					selected_links.add(a);
 					selected_nodes.add(a.getSender());
-					rho = 1+(rho_0-1)/Math.pow(1-Math.pow(a.getLength()/R,kappa),1/kappa);
+					rho = calcrho(a);
 					firstRemoval(a,rho);
 					secondRemoval(a,true);
 				}
@@ -225,7 +235,7 @@ public class MaxLinksDemo3 extends JFrame implements KeyListener {
 					a=primaryLink;
 					selected_links.add(a);
 					selected_nodes.add(a.getSender());
-					rho = 1+(rho_0-1)/Math.pow(1-Math.pow(a.getLength()/R,kappa),1/kappa);
+					rho = calcrho(a);
 					firstRemoval(a,rho);
 					secondRemoval(a,true);
 				}
@@ -233,7 +243,7 @@ public class MaxLinksDemo3 extends JFrame implements KeyListener {
 					a.select();
 					selected_links.add(a);
 					selected_nodes.add(a.getSender());
-					rho = 1+(rho_0-1)/Math.pow(1-Math.pow(a.getLength()/R,kappa),1/kappa);
+					rho = calcrho(a);
 					firstRemoval(a,rho);
 					secondRemoval(a,true);
 
@@ -344,14 +354,34 @@ public class MaxLinksDemo3 extends JFrame implements KeyListener {
 
 	}
 	
-	//getters
+	//getter for selected node
 	public HashSet<Node> getSelectedNodes() {
 		return selected_nodes;
 	}
 
+	//getter for selected links
 	public HashSet<Link> getSelectedLinks() {
 		return selected_links;
 	}
+	
+	public ArrayList<Link> getLinks() {
+		return links2;
+	}
+	
+	public ArrayList<Node> getNodes() {
+		return nodes2;
+	}
+	
+	//setter for nodes
+	public void setNodes(ArrayList<Node> nodes) {
+		this.nodes2=nodes;
+	}
+	
+	//setter for links
+	public void setLinks(ArrayList<Link> links) {
+		this.links2=links;
+	}
+	
 
 	public double getRho0() {
 		return rho_0;
