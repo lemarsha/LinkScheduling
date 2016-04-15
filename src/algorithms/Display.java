@@ -57,7 +57,7 @@ public class Display extends JFrame implements KeyListener{
 	}
 	
 	public static void main(String[] args) {
-		Display test = new Display(1, 100, 1, 30, 0.5, 4, 16, 0.2);
+		Display test = new Display(10, 100, 1, 30, 0.5, 4, 16, 0.2);
 		test.setDefaultCloseOperation(EXIT_ON_CLOSE);
 		test.setVisible(true);
 	}

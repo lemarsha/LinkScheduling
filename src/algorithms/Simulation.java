@@ -63,14 +63,17 @@ public class Simulation {
 	
 	void run() {
 		ArrayList<Link> links_s2 = new ArrayList<Link>(links_s);
-		algorithmC = new HashSet<Link>(algorithmC(links_p, links_s2));
+		ArrayList<Link> links_p2 = new ArrayList<Link>(links_p);
+		algorithmC = new HashSet<Link>(algorithmC(links_p2, links_s2));
 		links_s2 = new ArrayList<Link>(links_s);
-		algorithmPLMISL = new HashSet<Link>(algorithmPLMISL(links_p, links_s2));
+		links_p2 = new ArrayList<Link>(links_p);
+		algorithmPLMISL = new HashSet<Link>(algorithmPLMISL(links_p2, links_s2));
 		links_s2 = new ArrayList<Link>(links_s);
-		algorithmTolerance = new HashSet<Link>(algorithmTolerance(links_p, links_s2));
+		links_p2 = new ArrayList<Link>(links_p);
+		algorithmTolerance = new HashSet<Link>(algorithmTolerance(links_p2, links_s2));
 		links_s2 = new ArrayList<Link>(links_s);
-		algorithmMatrix = new HashSet<Link>(algorithmMatrix(links_p, links_s2));
-		rho_0=1+Math.pow((sigma*(16*1.202+8*Math.pow(Math.PI,4)/90-6)/phi),1/exp);
+		links_p2 = new ArrayList<Link>(links_p);
+		algorithmMatrix = new HashSet<Link>(algorithmMatrix(links_p2, links_s2));
 	}
 	
 	//generate nodes
@@ -177,7 +180,10 @@ public class Simulation {
 	public Set<Link> algorithmC(ArrayList<Link> links_p, ArrayList<Link> links_s) {
 		Set<Link> selected_links = new HashSet<Link>();
 		//only works for 1 primary link
-		if (links_p.size()!=1) return null;
+		if (links_p.size()!=1) {
+			selected_links.addAll(links_p);
+			return selected_links;
+		}
 		//set up variables
 		Link a;
 		double rho;
@@ -220,15 +226,23 @@ public class Simulation {
 		return 1+(rho_0-1)/Math.pow(1-Math.pow(a.getLength()/max_rad,exp),1/exp);
 	}
 	
+	boolean canAddLink(Link a, ArrayList<Link> links_p, HashSet<Link> selectedLinks) {
+		for (int i = 0; i<links_p.size(); i++) {
+			if (relativeInterference(a.getSender(),links_p.get(i))+relativeInterference(selectedLinks,links_p.get(i))>(1-phi)) return false;
+		}
+		return true;
+	}
+	
 	//algorithm with primary link
+	@SuppressWarnings("unchecked")
 	public Set<Link> algorithmPLMISL(ArrayList<Link> links_p, ArrayList<Link> links_s) {
 		Set<Link> selected_links = new HashSet<Link>();
-		//only works for one primary link
-		if (links_p.size()!=1) return null;
 		//set up variables
 		Link a;
 		double rho;
 		boolean first=true;
+		//sort primary links and get the smallest
+		Collections.sort(links_p);
 		Link primaryLink = links_p.get(0);
 		//run algorithm
 		while(links_s.size()>0) {
@@ -244,12 +258,18 @@ public class Simulation {
 			}
 			else {
 				if (first) {
-					first = false;
 					a=primaryLink;
 					selected_links.add(a);
 					rho = calcrho(a);
 					links_s = firstRemoval(links_s, a,rho);
 					links_s = secondRemoval(links_s, selected_links, primaryLink, a,true);
+					//check if more primary links
+					links_p.remove(0);
+					if (links_p.size()==0) {
+						first = false;
+					} else {
+						primaryLink = links_p.get(0);
+					}
 				}
 				else {
 					selected_links.add(a);
@@ -349,8 +369,99 @@ public class Simulation {
 		return selected_links;
 	}
 	
+	//finds the link that should be removed based on row+col
+	public int findRemoval_rc(double[][] matrix, int psize) {
+		double max_interference = 0;
+		int link=psize;
+		for (int i = psize; i<matrix.length-1; i++) {
+			double interference = matrix[i][matrix.length-1]+matrix[matrix.length-1][i];
+			if (interference>max_interference) {
+				max_interference=interference;
+				link=i;
+			}
+		}
+		return link;
+	}
+	
+	//finds the link that should be removed based on row
+	//interference that the link has on other links
+	public int findRemoval_r(double[][] matrix, int psize) {
+		double max_interference = 0;
+		int link=psize;
+		for (int i = psize; i<matrix.length-1; i++) {
+			double interference = matrix[i][matrix.length-1];
+			if (interference>max_interference) {
+				max_interference=interference;
+				link=i;
+			}
+		}
+		return link;
+	}
+	
+	//finds the link that should be removed based on col
+	//interference of other links on the link
+	public int findRemoval_c(double[][] matrix, int psize) {
+		double max_interference = 0;
+		int link=0;
+		for (int i = psize; i<matrix.length-1; i++) {
+			double interference = matrix[matrix.length-1][i];
+			if (interference>max_interference) {
+				max_interference=interference;
+				link=i;
+			}
+		}
+		return link;
+	}
+	
+	public boolean independent(double[][] matrix) {
+		for (int i = 0; i<matrix.length-1; i++) {
+			if (matrix[matrix.length-1][i]>1) return false;
+		}
+		return true;
+	}
+	
 	public Set<Link> algorithmMatrix(ArrayList<Link> links_p, ArrayList<Link> links_s) {
 		Set<Link> selected_links = new HashSet<Link>();
+		ArrayList<Link> links = new ArrayList<Link>();
+		links.addAll(links_p);
+		links.addAll(links_s);
+		selected_links.addAll(links);
+		int psize = links_p.size(), ssize = links_s.size();
+		int size = psize+ssize+1;
+		double[][] matrix = new double[size][size];
+		//initialize the matrix
+		for (int i = 0; i<size-1; i++) {
+			for (int j = 0; j<size-1; j++) {
+				if (i==j) {
+					matrix[i][j]=0;
+				}else if (i<psize && j<psize) {
+					matrix[i][j]=0;
+				}else {
+					matrix[i][j] = relativeInterference(links.get(i).getSender(), links.get(j));
+					matrix[i][size-1]+=matrix[i][j];
+					matrix[size-1][j]+=matrix[i][j];
+				}
+			}
+		}
+		matrix[size-1][size-1]=0;
+		//while the links aren't independent
+		
+		while (!independent(matrix)) {
+			//find a link to remove
+			int link_id = findRemoval_rc(matrix,psize);
+			selected_links.remove(links.get(link_id));
+			//subtract interference of that link from the other links
+			for (int i = 0; i<size-1; i++) {
+				//get the interference of the link on the link i
+				double interference = matrix[link_id][i];
+				//subtract the interference that link had on i from the total interference on i
+				matrix[size-1][i]-=interference;
+				//set that value = 0
+				matrix[link_id][i] = 0;
+			}
+			matrix[size-1][link_id] = 0;
+			matrix[link_id][size-1]=0;
+		}
 		return selected_links;
 	}
 	
@@ -380,11 +491,12 @@ public class Simulation {
 
 	public static void main(String[] args) {
 		//FIX R EQUATION
-		Simulation s = new Simulation(1, 100, 1, 30, 0.5, 4, 16, 0.2);
+		Simulation s = new Simulation(10, 100, 1, 30, 0.5, 4, 16, 0.2);
 		s.run();
 		System.out.println("Algorithm C size: " + s.getAlgorithmC().size());
 		System.out.println("Algorithm PLMISL size: " + s.getAlgorithmPLMISL().size());
 		System.out.println("Algorithm Tolerance size: " + s.getAlgorithmTolerance().size());
+		System.out.println("Algorithm Matrix size: " + s.getAlgorithmMatrix().size());
 	}
 
 }

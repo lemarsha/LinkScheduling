@@ -147,4 +147,20 @@ public class TestSimulation {
 		}
 	}
 	
+	@Test
+	public void testIndependent_Matrix() {
+		Simulation s = new Simulation(1, 100, minlen, maxlen, 0.5, 4, 16, 0.2);
+		s.run();
+		Set<Link> selected_links = s.getAlgorithmMatrix();
+		System.out.println("Algorithm Matrix size: " + selected_links.size());
+		for (Link l1: selected_links) {
+			double totalInterference = 0.0;
+			for (Link l2: selected_links) {
+				if (l1.equals(l2)) continue;
+				totalInterference+=s.relativeInterference(l2.getSender(),l1);
+			}
+			assertTrue(totalInterference<=1);
+		}
+	}
+	
 }
