@@ -122,7 +122,9 @@ public class Simulation {
 			double x = n.getX()+length*Math.cos(angle*Math.PI/180.0);
 			double y = n.getY()-length*Math.sin(angle*Math.PI/180.0);
 			Node n2 = new Node(x,y);
-			links.add(new Link(n,n2,length));
+			Link l = new Link(n,n2,length);
+			l.setPrimaryLink();
+			links.add(l);
 		}
 		return links;
 	}
@@ -179,35 +181,35 @@ public class Simulation {
 	//Circle algorithm
 	public Set<Link> algorithmC(ArrayList<Link> links_p, ArrayList<Link> links_s) {
 		Set<Link> selected_links = new HashSet<Link>();
-		//only works for 1 primary link
-		if (links_p.size()!=1) {
-			selected_links.addAll(links_p);
-			return selected_links;
-		}
+		//add all primary links to set
+		selected_links.addAll(links_p);
 		//set up variables
 		Link a;
 		double rho;
-		Link primaryLink = links_p.get(0);
 		double rho_s = 1+(rho_0-1)/Math.pow(1-Math.pow(1/max_rad,exp),1/exp);
-		double c = 24*sigma*Math.pow(primaryLink.getLength(),exp);
-		c/=((exp-2)*(1-Math.pow(primaryLink.getLength()/max_rad,exp))*Math.pow(rho_s,exp));
-		c = Math.ceil(Math.pow(c,1/(exp-2))+0.5);
-		//first removal
-		ArrayList<Link> S_1 = new ArrayList<Link>();
+		for (Link primaryLink: links_p) {
+			//calculate c
+			double c = 24*sigma*Math.pow(primaryLink.getLength(),exp);
+			c/=((exp-2)*(1-Math.pow(primaryLink.getLength()/max_rad,exp))*Math.pow(rho_s,exp));
+			c = Math.ceil(Math.pow(c,1/(exp-2))+0.5);
+			//removal of links in c*rho
+			ArrayList<Link> S_1 = new ArrayList<Link>();
+			for (Link l: links_s) {
+				if (primaryLink.getSender().distanceToOtherNode(l.getSender())<c*rho_s) S_1.add(l);
+			}
+			for(Link l: S_1) {
+				links_s.remove(l);
+			}
+
+		}
+		//removals with interference too high
 		ArrayList<Link> S_2 = new ArrayList<Link>();
 		for (Link l: links_s) {
-			if (primaryLink.getSender().distanceToOtherNode(l.getSender())<c*rho_s) S_1.add(l);
-		}
-		for(Link l: S_1) {
-			links_s.remove(l);
-		}
-		for (Link l: links_s) {
-			if (relativeInterference(primaryLink.getSender(),l)>1-phi) S_2.add(l);
+			if (relativeInterference(selected_links,l)>1-phi) S_2.add(l);
 		}
 		for (Link l: S_2) {
 			links_s.remove(l);
 		}
-		selected_links.add(primaryLink);
 		//rest of algorithm
 		while (links_s.size()>0) {
 			a=links_s.get(0);
@@ -215,7 +217,7 @@ public class Simulation {
 			selected_links.add(a);
 			rho = 1+(rho_0-1)/Math.pow(1-Math.pow(a.getLength()/max_rad,exp),1/exp);
 			links_s = firstRemoval(links_s, a, rho);
-			links_s = secondRemoval(links_s, selected_links, primaryLink, a, false);
+			links_s = secondRemoval(links_s, selected_links, links_p.get(0), a, false);
 		}
 		
 		return selected_links;
@@ -226,17 +228,11 @@ public class Simulation {
 		return 1+(rho_0-1)/Math.pow(1-Math.pow(a.getLength()/max_rad,exp),1/exp);
 	}
 	
-	boolean canAddLink(Link a, ArrayList<Link> links_p, HashSet<Link> selectedLinks) {
-		for (int i = 0; i<links_p.size(); i++) {
-			if (relativeInterference(a.getSender(),links_p.get(i))+relativeInterference(selectedLinks,links_p.get(i))>(1-phi)) return false;
-		}
-		return true;
-	}
-	
 	//algorithm with primary link
 	@SuppressWarnings("unchecked")
 	public Set<Link> algorithmPLMISL(ArrayList<Link> links_p, ArrayList<Link> links_s) {
 		Set<Link> selected_links = new HashSet<Link>();
+		Set<Link> selected_primary_links = new HashSet<Link>();
 		//set up variables
 		Link a;
 		double rho;
@@ -260,6 +256,7 @@ public class Simulation {
 				if (first) {
 					a=primaryLink;
 					selected_links.add(a);
+					selected_primary_links.add(a);
 					rho = calcrho(a);
 					links_s = firstRemoval(links_s, a,rho);
 					links_s = secondRemoval(links_s, selected_links, primaryLink, a,true);

@@ -98,6 +98,7 @@ public class TestSimulation {
 	
 	@Test
 	public void testIndependent_C() {
+		//just one primary link
 		Simulation s = new Simulation(1, 100, minlen, maxlen, 0.5, 4, 16, 0.2);
 		s.run();
 		Set<Link> selected_links = s.getAlgorithmC();
@@ -111,10 +112,28 @@ public class TestSimulation {
 			}
 			assertTrue(totalInterference<=1);
 		}
+		
+		//more than one primary link
+		s = new Simulation(10, 100, minlen, maxlen, 0.5, 4, 16, 0.2);
+		s.run();
+		selected_links = s.getAlgorithmC();
+		System.out.println("Algorithm C size: " + selected_links.size());
+		for (Link l1: selected_links) {
+			double totalInterference=0.0;
+			//check that all nodes unique
+			for (Link l2: selected_links) {
+				if (l1.equals(l2)) continue;
+				//ignore interference of a primary link on another primary link
+				if (l1.getSender()==l2.getSender()) continue;
+				totalInterference+=s.relativeInterference(l2.getSender(), l1);
+			}
+			assertTrue(totalInterference<=1);
+		}
 	}
 	
 	@Test
 	public void testIndependent_PLMISL() {
+		//just one primary link
 		Simulation s = new Simulation(1, 100, minlen, maxlen, 0.5, 4, 16, 0.2);
 		s.run();
 		Set<Link> selected_links = s.getAlgorithmPLMISL();
@@ -128,10 +147,28 @@ public class TestSimulation {
 			}
 			assertTrue(totalInterference<=1);
 		}
+		
+		//more than one primary link
+		s = new Simulation(10, 100, minlen, maxlen, 0.5, 4, 16, 0.2);
+		s.run();
+		selected_links = s.getAlgorithmPLMISL();
+		System.out.println("Algorithm PLMISL size: " + selected_links.size());
+		for (Link l1: selected_links) {
+			double totalInterference=0.0;
+			//check that all nodes unique
+			for (Link l2: selected_links) {
+				if (l1.equals(l2)) continue;
+				//ignore interference of a primary link on another primary link
+				if (l1.getSender()==l2.getSender()) continue;
+				totalInterference+=s.relativeInterference(l2.getSender(), l1);
+			}
+			assertTrue(totalInterference<=1);
+		}
 	}
 	
 	@Test
 	public void testIndependent_Tolerance() {
+		//just one primary link
 		Simulation s = new Simulation(1, 100, minlen, maxlen, 0.5, 4, 16, 0.2);
 		s.run();
 		Set<Link> selected_links = s.getAlgorithmTolerance();
@@ -145,10 +182,28 @@ public class TestSimulation {
 			}
 			assertTrue(totalInterference<=1);
 		}
+		
+		//more than one primary link
+		s = new Simulation(10, 100, minlen, maxlen, 0.5, 4, 16, 0.2);
+		s.run();
+		selected_links = s.getAlgorithmTolerance();
+		System.out.println("Algorithm Tolerance size: " + selected_links.size());
+		for (Link l1: selected_links) {
+			double totalInterference=0.0;
+			//check that all nodes unique
+			for (Link l2: selected_links) {
+				if (l1.equals(l2)) continue;
+				//ignore interference of a primary link on another primary link
+				if (l1.getSender()==l2.getSender()) continue;
+				totalInterference+=s.relativeInterference(l2.getSender(), l1);
+			}
+			assertTrue(totalInterference<=1);
+		}
 	}
 	
 	@Test
 	public void testIndependent_Matrix() {
+		//just one primary link
 		Simulation s = new Simulation(1, 100, minlen, maxlen, 0.5, 4, 16, 0.2);
 		s.run();
 		Set<Link> selected_links = s.getAlgorithmMatrix();
@@ -157,6 +212,22 @@ public class TestSimulation {
 			double totalInterference = 0.0;
 			for (Link l2: selected_links) {
 				if (l1.equals(l2)) continue;
+				totalInterference+=s.relativeInterference(l2.getSender(),l1);
+			}
+			assertTrue(totalInterference<=1);
+		}
+		
+		//more than one primary link
+		s = new Simulation(10, 100, minlen, maxlen, 0.5, 4, 16, 0.2);
+		s.run();
+		selected_links = s.getAlgorithmMatrix();
+		System.out.println("Algorithm Matrix size: " + selected_links.size());
+		for (Link l1: selected_links) {
+			double totalInterference = 0.0;
+			for (Link l2: selected_links) {
+				if (l1.equals(l2)) continue;
+				//ignore interference of a primary link on another primary link
+				if (l1.getSender()==l2.getSender()) continue;
 				totalInterference+=s.relativeInterference(l2.getSender(),l1);
 			}
 			assertTrue(totalInterference<=1);
