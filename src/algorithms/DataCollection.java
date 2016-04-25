@@ -46,7 +46,7 @@ public class DataCollection {
 		//open the file to write to
 		PrintWriter writer;
 		try {
-			writer = new PrintWriter("results.txt", "UTF-8");
+			writer = new PrintWriter("results2.txt", "UTF-8");
 		} catch (FileNotFoundException | UnsupportedEncodingException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -110,6 +110,8 @@ public class DataCollection {
 					s_t+=s.getAlgorithmTolerance().size();
 					t_t+=(endTime-startTime);
 					
+					/*
+					
 					//Matrix Algorithm
 					startTime = System.nanoTime();
 					s.runMatrix();
@@ -124,16 +126,18 @@ public class DataCollection {
 					s_p+=s.getAlgorithmPLMISL().size();
 					t_p+=(endTime-startTime);
 					
+					*/
+					
 					
 				} //end loop for multiple trials
 				
 				
 				//write the results to the files
 				//System.out.println("C Algorithm, "+numPrimaryLinks+", "+numSecondaryLinks+", "+1.0*s_c/num_calcs+", "+t_c/num_calcs);
-				writer.println("C Algorithm, "+numPrimaryLinks+", "+numSecondaryLinks+", "+1.0*s_c/num_calcs+", "+t_c/num_calcs);
-				writer.println("T Algorithm, "+numPrimaryLinks+", "+numSecondaryLinks+", "+1.0*s_t/num_calcs+", "+t_t/num_calcs);
-				writer.println("M Algorithm, "+numPrimaryLinks+", "+numSecondaryLinks+", "+1.0*s_m/num_calcs+", "+t_m/num_calcs);
-				writer.println("P Algorithm, "+numPrimaryLinks+", "+numSecondaryLinks+", "+1.0*s_p/num_calcs+", "+t_p/num_calcs);
+				writer.println(numPrimaryLinks+" "+numSecondaryLinks+" "+1.0*s_c/num_calcs+" "+t_c/num_calcs);
+				writer.println(numPrimaryLinks+" "+numSecondaryLinks+" "+1.0*s_t/num_calcs+" "+t_t/num_calcs);
+				//writer.println("M Algorithm, "+numPrimaryLinks+", "+numSecondaryLinks+", "+1.0*s_m/num_calcs+", "+t_m/num_calcs);
+				//writer.println("P Algorithm, "+numPrimaryLinks+", "+numSecondaryLinks+", "+1.0*s_p/num_calcs+", "+t_p/num_calcs);
 				
 				//average the times and push them to array
 				selected_c_inner.add(1.0*s_c/num_calcs);
