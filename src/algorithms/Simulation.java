@@ -10,8 +10,8 @@ import java.util.Set;
 public class Simulation {
 	
 	//dimensions of area
-	public static final int WIDTH = 100;
-	public static final int HEIGHT = 100;
+	public static final int WIDTH = 100000;
+	public static final int HEIGHT = 100000;
 	
 	private ArrayList<Node> senders_s;
 	private Node sender_p;
@@ -19,8 +19,10 @@ public class Simulation {
 	
 	//constants
 	double phi, exp, max_rad, sigma, power;
-	double noise = 0.000000001; //1.0*Math.pow(10, -9);
+	double noise = 1.0*Math.pow(10, -16);
 	double path_loss = 1;
+	
+	private int minLinkLength, maxLinkLength, numPrimaryLinks;
 	
 	//results
 	Set<Link> algorithmC, algorithmPLMISL, algorithmTolerance, algorithmMatrix;
@@ -31,6 +33,9 @@ public class Simulation {
 	@SuppressWarnings("unchecked")
 	public Simulation(int numPrimaryLinks, int numSecondaryLinks, int minLinkLength, int maxLinkLength) {
 		//generate senders and links for secondary links
+		this.minLinkLength = minLinkLength;
+		this.maxLinkLength = maxLinkLength;
+		this.numPrimaryLinks = numPrimaryLinks;
 		senders_s = generateNodes(numSecondaryLinks);
 		links_s = generateLinks(senders_s, minLinkLength, maxLinkLength);
 		Collections.sort(links_s);
@@ -52,7 +57,9 @@ public class Simulation {
 		sender_p = generatePrimaryNode(); //in the middle
 		links_p = generateLinks(sender_p, numPrimaryLinks, minLinkLength, maxLinkLength);
 		Collections.sort(links_p);
-		
+		this.minLinkLength = minLinkLength;
+		this.maxLinkLength = maxLinkLength;
+		this.numPrimaryLinks = numPrimaryLinks;
 		this.phi=phi;
 		this.exp = exp;
 		this.max_rad = Math.pow((path_loss*power)/(sigma*noise),1/exp);
@@ -61,28 +68,50 @@ public class Simulation {
 		rho_0=1+Math.pow((sigma*(16*1.202+8*Math.pow(Math.PI,4)/90-6)/phi),1/exp);
 	}
 	
+	//run all of the algorithms
 	void run() {
+		runC();
+		runPLMISL();
+		runTolerance();
+		runMatrix();
+	}
+	
+	//run all of the algorithms independently so you can time them I guess
+	void runC() {
 		ArrayList<Link> links_s2 = new ArrayList<Link>(links_s);
 		ArrayList<Link> links_p2 = new ArrayList<Link>(links_p);
 		algorithmC = new HashSet<Link>(algorithmC(links_p2, links_s2));
-		links_s2 = new ArrayList<Link>(links_s);
-		links_p2 = new ArrayList<Link>(links_p);
+	}
+	void runPLMISL() {
+		ArrayList<Link> links_s2 = new ArrayList<Link>(links_s);
+		ArrayList<Link> links_p2 = new ArrayList<Link>(links_p);
 		algorithmPLMISL = new HashSet<Link>(algorithmPLMISL(links_p2, links_s2));
-		links_s2 = new ArrayList<Link>(links_s);
-		links_p2 = new ArrayList<Link>(links_p);
+	}
+	void runTolerance() {
+		ArrayList<Link> links_s2 = new ArrayList<Link>(links_s);
+		ArrayList<Link> links_p2 = new ArrayList<Link>(links_p);
 		algorithmTolerance = new HashSet<Link>(algorithmTolerance(links_p2, links_s2));
-		links_s2 = new ArrayList<Link>(links_s);
-		links_p2 = new ArrayList<Link>(links_p);
+	}
+	void runMatrix() {
+		ArrayList<Link> links_s2 = new ArrayList<Link>(links_s);
+		ArrayList<Link> links_p2 = new ArrayList<Link>(links_p);
 		algorithmMatrix = new HashSet<Link>(algorithmMatrix(links_p2, links_s2));
 	}
 	
 	//generate nodes
 	public ArrayList<Node> generateNodes(int numNodes){
 		ArrayList<Node> nodes = new ArrayList<Node>();
+		Set<Node> nodes2 = new HashSet<Node>();
 		Random r = new Random();
 		//loop over number of  nodes and generate random senders
 		for (int i = 0; i<numNodes; i++) {
-			nodes.add(new Node(r.nextInt(WIDTH), r.nextInt(HEIGHT)));
+			Node n = new Node(r.nextInt(WIDTH), r.nextInt(HEIGHT));
+			//make sure no two same nodes are chosen
+			while (nodes2.contains(n)) {
+				n = new Node(r.nextInt(WIDTH), r.nextInt(HEIGHT));
+			}
+			nodes.add(n);
+			nodes2.add(n);
 		}
 		return nodes;
 	}
@@ -97,17 +126,21 @@ public class Simulation {
 		ArrayList<Link> links = new ArrayList<Link>();
 		Random r = new Random();
 		double x=0, y=0;
+		Set<Node> existing_nodes = new HashSet<Node>();
+		existing_nodes.addAll(nodes);
 		for (Node n: nodes) {
 			boolean possible=false;
 			int length = r.nextInt(maxLinkLength-minLinkLength)+minLinkLength;
+			Node n2 = new Node(1,1);
 			while (!possible) {
 				int angle = r.nextInt(360);
 				x = n.getX()+length*Math.cos(angle*Math.PI/180.0);
 				y = n.getY()-length*Math.sin(angle*Math.PI/180.0);
-				if (x>0 && x<WIDTH && y>0 && y<HEIGHT) possible=true;
+				n2 = new Node(x,y);
+				if (x>0 && x<WIDTH && y>0 && y<HEIGHT && !existing_nodes.contains(n2)) possible=true;
 			}
-			Node n2 = new Node(x,y);
 			links.add(new Link(n, n2, length));
+			existing_nodes.add(n2);
 		}
 		return links;
 	}
@@ -115,13 +148,19 @@ public class Simulation {
 	//generate primary links
 	public ArrayList<Link> generateLinks(Node n, int numNodes, int minLinkLength, int maxLinkLength) {
 		ArrayList<Link> links = new ArrayList<Link>();
+		Set<Node> existing_nodes = new HashSet<Node>();
 		Random r = new Random();
 		for (int i = 0; i<numNodes; i++) {
 			int angle = r.nextInt(360);
 			int length = r.nextInt(maxLinkLength-minLinkLength)+minLinkLength;
-			double x = n.getX()+length*Math.cos(angle*Math.PI/180.0);
-			double y = n.getY()-length*Math.sin(angle*Math.PI/180.0);
-			Node n2 = new Node(x,y);
+			Node n2 = new Node(1,1);
+			boolean possible = false;
+			while (!possible) {
+				double x = n.getX()+length*Math.cos(angle*Math.PI/180.0);
+				double y = n.getY()-length*Math.sin(angle*Math.PI/180.0);
+				n2 = new Node(x,y);
+				if (!existing_nodes.contains(n2)) possible=true;
+			}
 			Link l = new Link(n,n2,length);
 			l.setPrimaryLink();
 			links.add(l);
@@ -141,6 +180,9 @@ public class Simulation {
 
 	//calculates the relative interference of a node on another node
 	public double relativeInterference(Node w, Link a) {
+		if (w == a.getSender()) {
+			return 0;
+		}
 		return sigma*Math.pow(a.getLength()/w.distanceToOtherNode(a.getReceiver()),exp)
 			/(1-Math.pow(a.getLength()/max_rad,exp));
 	}
@@ -177,6 +219,25 @@ public class Simulation {
 		return links_s;
 	}
 	
+	//calculate a bound on phi
+	public double calcPhi() {
+		double top = 1 - Math.pow((1.0*maxLinkLength/max_rad),exp);
+		double bot = 1- Math.pow(1/max_rad,exp);
+		double f = Math.pow(top/bot, 1/exp)*Math.pow(maxLinkLength,-1);
+		double q = Math.pow(24*sigma/(exp-2), 1/(exp-2));
+		
+		//if this is true return the minimum of phi and the bound on phi
+		if (Math.pow(f, -2/(exp-2))>numPrimaryLinks) {
+			double phi_max = sigma*(16*1.202 +8*Math.pow(Math.PI,4)/90 - 6);
+			double middle = (Math.pow(f, -2/(exp-2))/Math.pow(numPrimaryLinks, 1/exp)-1)/(1-f/Math.pow(numPrimaryLinks, 1/exp));
+			double middle2 = Math.pow(q/1.5*middle, (exp-2)/exp)-1;
+			phi_max = phi_max*Math.pow(middle2, -exp);
+			return phi_max;
+		}
+		
+		//if not true return phi
+		return phi;
+	}
 	
 	//Circle algorithm
 	public Set<Link> algorithmC(ArrayList<Link> links_p, ArrayList<Link> links_s) {
@@ -186,12 +247,17 @@ public class Simulation {
 		//set up variables
 		Link a;
 		double rho;
-		double rho_s = 1+(rho_0-1)/Math.pow(1-Math.pow(1/max_rad,exp),1/exp);
+		double rho_s = 1+(rho_0-1)/Math.pow(1-Math.pow(minLinkLength/max_rad,exp),1/exp);
+		//store actual value of phi to set the one needed for this algorithm
+		double phi_int = phi;
+		phi = calcPhi();
+		//System.out.println("rho_s: "+rho_s);
 		for (Link primaryLink: links_p) {
 			//calculate c
 			double c = 24*sigma*Math.pow(primaryLink.getLength(),exp);
 			c/=((exp-2)*(1-Math.pow(primaryLink.getLength()/max_rad,exp))*Math.pow(rho_s,exp));
 			c = Math.ceil(Math.pow(c,1/(exp-2))+0.5);
+			//System.out.println("Link length: "+primaryLink.getLength()+", C: "+c+", rho: "+rho_s+", C*rho_s: "+c*rho_s);
 			//removal of links in c*rho
 			ArrayList<Link> S_1 = new ArrayList<Link>();
 			for (Link l: links_s) {
@@ -219,7 +285,8 @@ public class Simulation {
 			links_s = firstRemoval(links_s, a, rho);
 			links_s = secondRemoval(links_s, selected_links, links_p.get(0), a, false);
 		}
-		
+		//set phi back to what is actually is without bounds from this algorithm
+		phi = phi_int;
 		return selected_links;
 	}
 	
@@ -239,44 +306,54 @@ public class Simulation {
 		boolean first=true;
 		//sort primary links and get the smallest
 		Collections.sort(links_p);
-		Link primaryLink = links_p.get(0);
+		Link primaryLink_c = links_p.get(0);
 		//run algorithm
 		while(links_s.size()>0) {
 			a=links_s.get(0);
 			links_s.remove(0);
-			if (a.getLength()<primaryLink.getLength()) {
-				if (relativeInterference(a.getSender(),primaryLink)+relativeInterference(selected_links,primaryLink)<=(1-phi)) {
+			if (a.getLength()<primaryLink_c.getLength()) {
+				//figure out if you can add the link to the set
+				//you can only add it if the relative interference of the sender and the existing links on the primary links are less than 1-phi
+				boolean can_add = true;
+				for (Link primaryLink: links_p) {
+					if (relativeInterference(a.getSender(),primaryLink)+relativeInterference(selected_links,primaryLink)>(1-phi)) {
+						can_add = false;
+						break;
+					}
+				}
+				if (can_add) {
 					selected_links.add(a);
 					rho = calcrho(a);
 					links_s = firstRemoval(links_s, a,rho);
-					links_s = secondRemoval(links_s, selected_links, primaryLink, a,true);
+					links_s = secondRemoval(links_s, selected_links, primaryLink_c, a,true);
 				}
 			}
 			else {
 				if (first) {
-					a=primaryLink;
+					a=primaryLink_c;
 					selected_links.add(a);
 					selected_primary_links.add(a);
 					rho = calcrho(a);
 					links_s = firstRemoval(links_s, a,rho);
-					links_s = secondRemoval(links_s, selected_links, primaryLink, a,true);
+					links_s = secondRemoval(links_s, selected_links, primaryLink_c, a,true);
 					//check if more primary links
 					links_p.remove(0);
 					if (links_p.size()==0) {
 						first = false;
 					} else {
-						primaryLink = links_p.get(0);
+						primaryLink_c = links_p.get(0);
 					}
 				}
 				else {
 					selected_links.add(a);
 					rho = calcrho(a);
 					links_s = firstRemoval(links_s, a,rho);
-					links_s = secondRemoval(links_s, selected_links, primaryLink, a,true);
+					links_s = secondRemoval(links_s, selected_links, primaryLink_c, a, false);
 
 				}
 			}
 		}
+		if (links_p.size()!=0) selected_links.addAll(links_p);
 		return selected_links;
 	}
 	
@@ -445,7 +522,7 @@ public class Simulation {
 		
 		while (!independent(matrix)) {
 			//find a link to remove
-			int link_id = findRemoval_rc(matrix,psize);
+			int link_id = findRemoval_c(matrix,psize);
 			selected_links.remove(links.get(link_id));
 			//subtract interference of that link from the other links
 			for (int i = 0; i<size-1; i++) {
@@ -488,7 +565,7 @@ public class Simulation {
 
 	public static void main(String[] args) {
 		//FIX R EQUATION
-		Simulation s = new Simulation(10, 100, 1, 30, 0.5, 4, 16, 0.2);
+		Simulation s = new Simulation(10, 100, 1000, 10000, 0.5, 4, 16, 20);
 		s.run();
 		System.out.println("Algorithm C size: " + s.getAlgorithmC().size());
 		System.out.println("Algorithm PLMISL size: " + s.getAlgorithmPLMISL().size());

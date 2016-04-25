@@ -3,6 +3,7 @@ package algorithms;
 import static org.junit.Assert.*;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Set;
 
 import org.junit.Test;
@@ -22,9 +23,16 @@ public class TestSimulation {
 		assertEquals(500,nodes.size());
 		assertEquals(500,links.size());
 		
+		Set<Node> existing_nodes = new HashSet<Node>();
+		
 		for (Link l: links) {
 			Node n1 = l.getSender();
 			Node n2 = l.getReceiver();
+			//assert that these nodes don't exist in the set
+			assertTrue(!existing_nodes.contains(n1));
+			existing_nodes.add(n1);
+			assertTrue(!existing_nodes.contains(n2));
+			existing_nodes.add(n2);
 			//assert link length and distance between nodes is equal
 			assertEquals(n1.distanceToOtherNode(n2), l.getLength(), .01);
 			//assert link length is greater than min and less than max
@@ -77,8 +85,13 @@ public class TestSimulation {
 		assertTrue(n.getX()==WIDTH/2);
 		assertTrue(n.getY()==HEIGHT/2);
 		
+		Set<Node> existing_nodes = new HashSet<Node>();
+		
 		for (Link l: links) {
 			Node n2 = l.getReceiver();
+			//make sure node doesn't already exist
+			assertTrue(!existing_nodes.contains(n2));
+			existing_nodes.add(n2);
 			//assert link length reasonable and equal to distance b/w nodes
 			assertEquals(n.distanceToOtherNode(n2), l.getLength(), 0.01);
 			assertTrue(l.getLength()>=minlen);
@@ -100,7 +113,7 @@ public class TestSimulation {
 	public void testIndependent_C() {
 		//just one primary link
 		Simulation s = new Simulation(1, 100, minlen, maxlen, 0.5, 4, 16, 0.2);
-		s.run();
+		s.runC();
 		Set<Link> selected_links = s.getAlgorithmC();
 		System.out.println("Algorithm C size: " + selected_links.size());
 		for (Link l1: selected_links) {
@@ -112,10 +125,15 @@ public class TestSimulation {
 			}
 			assertTrue(totalInterference<=1);
 		}
+		//make sure algorithm put all of the primary links into the selected links
+		ArrayList<Link> links_p = s.getPrimaryLinks();
+		for (Link l: links_p) {
+			assertTrue(selected_links.contains(l));
+		}
 		
 		//more than one primary link
 		s = new Simulation(10, 100, minlen, maxlen, 0.5, 4, 16, 0.2);
-		s.run();
+		s.runC();
 		selected_links = s.getAlgorithmC();
 		System.out.println("Algorithm C size: " + selected_links.size());
 		for (Link l1: selected_links) {
@@ -129,13 +147,18 @@ public class TestSimulation {
 			}
 			assertTrue(totalInterference<=1);
 		}
+		//make sure algorithm put all of the primary links into the selected links
+		links_p = s.getPrimaryLinks();
+		for (Link l: links_p) {
+			assertTrue(selected_links.contains(l));
+		}
 	}
 	
 	@Test
 	public void testIndependent_PLMISL() {
 		//just one primary link
 		Simulation s = new Simulation(1, 100, minlen, maxlen, 0.5, 4, 16, 0.2);
-		s.run();
+		s.runPLMISL();
 		Set<Link> selected_links = s.getAlgorithmPLMISL();
 		System.out.println("Algorithm PLMISL size: " + selected_links.size());
 		for (Link l1: selected_links) {
@@ -147,10 +170,15 @@ public class TestSimulation {
 			}
 			assertTrue(totalInterference<=1);
 		}
+		//make sure algorithm put all of the primary links into the selected links
+		ArrayList<Link> links_p = s.getPrimaryLinks();
+		for (Link l: links_p) {
+			assertTrue(selected_links.contains(l));
+		}
 		
 		//more than one primary link
 		s = new Simulation(10, 100, minlen, maxlen, 0.5, 4, 16, 0.2);
-		s.run();
+		s.runPLMISL();
 		selected_links = s.getAlgorithmPLMISL();
 		System.out.println("Algorithm PLMISL size: " + selected_links.size());
 		for (Link l1: selected_links) {
@@ -164,13 +192,18 @@ public class TestSimulation {
 			}
 			assertTrue(totalInterference<=1);
 		}
+		//make sure algorithm put all of the primary links into the selected links
+		links_p = s.getPrimaryLinks();
+		for (Link l: links_p) {
+			assertTrue(selected_links.contains(l));
+		}
 	}
 	
 	@Test
 	public void testIndependent_Tolerance() {
 		//just one primary link
 		Simulation s = new Simulation(1, 100, minlen, maxlen, 0.5, 4, 16, 0.2);
-		s.run();
+		s.runTolerance();
 		Set<Link> selected_links = s.getAlgorithmTolerance();
 		System.out.println("Algorithm Tolerance size: " + selected_links.size());
 		for (Link l1: selected_links) {
@@ -182,10 +215,15 @@ public class TestSimulation {
 			}
 			assertTrue(totalInterference<=1);
 		}
+		//make sure algorithm put all of the primary links into the selected links
+		ArrayList<Link> links_p = s.getPrimaryLinks();
+		for (Link l: links_p) {
+			assertTrue(selected_links.contains(l));
+		}
 		
 		//more than one primary link
 		s = new Simulation(10, 100, minlen, maxlen, 0.5, 4, 16, 0.2);
-		s.run();
+		s.runTolerance();
 		selected_links = s.getAlgorithmTolerance();
 		System.out.println("Algorithm Tolerance size: " + selected_links.size());
 		for (Link l1: selected_links) {
@@ -199,13 +237,18 @@ public class TestSimulation {
 			}
 			assertTrue(totalInterference<=1);
 		}
+		//make sure algorithm put all of the primary links into the selected links
+		links_p = s.getPrimaryLinks();
+		for (Link l: links_p) {
+			assertTrue(selected_links.contains(l));
+		}
 	}
 	
 	@Test
 	public void testIndependent_Matrix() {
 		//just one primary link
 		Simulation s = new Simulation(1, 100, minlen, maxlen, 0.5, 4, 16, 0.2);
-		s.run();
+		s.runMatrix();
 		Set<Link> selected_links = s.getAlgorithmMatrix();
 		System.out.println("Algorithm Matrix size: " + selected_links.size());
 		for (Link l1: selected_links) {
@@ -216,10 +259,15 @@ public class TestSimulation {
 			}
 			assertTrue(totalInterference<=1);
 		}
+		//make sure algorithm put all of the primary links into the selected links
+		ArrayList<Link> links_p = s.getPrimaryLinks();
+		for (Link l: links_p) {
+			assertTrue(selected_links.contains(l));
+		}
 		
 		//more than one primary link
 		s = new Simulation(10, 100, minlen, maxlen, 0.5, 4, 16, 0.2);
-		s.run();
+		s.runMatrix();
 		selected_links = s.getAlgorithmMatrix();
 		System.out.println("Algorithm Matrix size: " + selected_links.size());
 		for (Link l1: selected_links) {
@@ -231,6 +279,11 @@ public class TestSimulation {
 				totalInterference+=s.relativeInterference(l2.getSender(),l1);
 			}
 			assertTrue(totalInterference<=1);
+		}
+		//make sure algorithm put all of the primary links into the selected links
+		links_p = s.getPrimaryLinks();
+		for (Link l: links_p) {
+			assertTrue(selected_links.contains(l));
 		}
 	}
 	
