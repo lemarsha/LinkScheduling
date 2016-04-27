@@ -55,7 +55,7 @@ public class DataCollection {
 		
 		//print file thing to writer
 		writer.println("Results of simulation");
-		writer.println("Algorithm, NumPrimaryLinks, NumSecondaryLinks, NumLinksSelected, TimeToExecute(ns)");
+		writer.println("numPrimaryLinks, numSecondaryLinks, avgSelected, avgTime, minSelected, maxSelected, minTime, maxTime");
 		
 		//1, 2, 5, 10, 20, 30 primary links
 		for (int k = 0; k<6; k++) {
@@ -81,12 +81,20 @@ public class DataCollection {
 				//average over the calculations
 				int s_c=0;
 				int s_t=0;
-				int s_m=0;
-				int s_p=0;
+				//int s_m=0;
+				//int s_p=0;
 				long t_c=0;
 				long t_t=0;
-				long t_m=0;
-				long t_p=0;
+				//long t_m=0;
+				//long t_p=0;
+				int mins_c=Integer.MAX_VALUE;
+				int mins_t=Integer.MAX_VALUE;
+				int maxs_c=Integer.MIN_VALUE;
+				int maxs_t=Integer.MIN_VALUE;
+				long mint_c=Integer.MAX_VALUE;
+				long mint_t=Integer.MAX_VALUE;
+				long maxt_c=Integer.MIN_VALUE;
+				long maxt_t=Integer.MIN_VALUE;
 				
 				//make sure stuff is correct
 				System.out.println("Primary Links: "+numPrimaryLinks+", Secondary Links: "+numSecondaryLinks);
@@ -100,15 +108,27 @@ public class DataCollection {
 					long startTime = System.nanoTime();
 					s.runC();
 					long endTime = System.nanoTime();
+					//get vals
 					s_c+=s.getAlgorithmC().size();
 					t_c+=(endTime-startTime);
+					//get min and max
+					if (s.getAlgorithmC().size()<mins_c) mins_c = s.getAlgorithmC().size();
+					if (s.getAlgorithmC().size()>maxs_c) maxs_c = s.getAlgorithmC().size();
+					if ((endTime-startTime)<mint_c) mint_c = (endTime-startTime);
+					if ((endTime-startTime)>maxt_c) maxt_c = (endTime-startTime);
 					
 					//Tolerance Algorithm
 					startTime = System.nanoTime();
 					s.runTolerance();
 					endTime = System.nanoTime();
+					//get vals
 					s_t+=s.getAlgorithmTolerance().size();
 					t_t+=(endTime-startTime);
+					//get min and max
+					if (s.getAlgorithmTolerance().size()<mins_t) mins_t = s.getAlgorithmTolerance().size();
+					if (s.getAlgorithmTolerance().size()>maxs_t) maxs_t = s.getAlgorithmTolerance().size();
+					if ((endTime-startTime)<mint_t) mint_t = (endTime-startTime);
+					if ((endTime-startTime)>maxt_t) maxt_t = (endTime-startTime);
 					
 					/*
 					
@@ -134,20 +154,20 @@ public class DataCollection {
 				
 				//write the results to the files
 				//System.out.println("C Algorithm, "+numPrimaryLinks+", "+numSecondaryLinks+", "+1.0*s_c/num_calcs+", "+t_c/num_calcs);
-				writer.println(numPrimaryLinks+" "+numSecondaryLinks+" "+1.0*s_c/num_calcs+" "+t_c/num_calcs);
-				writer.println(numPrimaryLinks+" "+numSecondaryLinks+" "+1.0*s_t/num_calcs+" "+t_t/num_calcs);
+				writer.println(numPrimaryLinks+" "+numSecondaryLinks+" "+1.0*s_c/num_calcs+" "+t_c/num_calcs+" "+mins_c+" "+maxs_c+" "+mint_c+" "+maxt_c);
+				writer.println(numPrimaryLinks+" "+numSecondaryLinks+" "+1.0*s_t/num_calcs+" "+t_t/num_calcs+" "+mins_t+" "+maxs_t+" "+mint_t+" "+maxt_t);
 				//writer.println("M Algorithm, "+numPrimaryLinks+", "+numSecondaryLinks+", "+1.0*s_m/num_calcs+", "+t_m/num_calcs);
 				//writer.println("P Algorithm, "+numPrimaryLinks+", "+numSecondaryLinks+", "+1.0*s_p/num_calcs+", "+t_p/num_calcs);
 				
 				//average the times and push them to array
 				selected_c_inner.add(1.0*s_c/num_calcs);
 				selected_t_inner.add(1.0*s_t/num_calcs);
-				selected_m_inner.add(1.0*s_m/num_calcs);
-				selected_p_inner.add(1.0*s_p/num_calcs);
+				//selected_m_inner.add(1.0*s_m/num_calcs);
+				//selected_p_inner.add(1.0*s_p/num_calcs);
 				time_c_inner.add(t_c/num_calcs);
 				time_t_inner.add(t_t/num_calcs);
-				time_m_inner.add(t_m/num_calcs);
-				time_p_inner.add(t_p/num_calcs);
+				//time_m_inner.add(t_m/num_calcs);
+				//time_p_inner.add(t_p/num_calcs);
 				
 				
 				

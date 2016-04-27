@@ -22,7 +22,8 @@ public class Simulation {
 	double noise = 1.0*Math.pow(10, -16);
 	double path_loss = 1;
 	
-	private int minLinkLength, maxLinkLength, numPrimaryLinks;
+	private double minLinkLength, maxLinkLength;
+	private int numPrimaryLinks;
 	
 	//results
 	Set<Link> algorithmC, algorithmPLMISL, algorithmTolerance, algorithmMatrix;
@@ -57,15 +58,16 @@ public class Simulation {
 		sender_p = generatePrimaryNode(); //in the middle
 		links_p = generateLinks(sender_p, numPrimaryLinks, minLinkLength, maxLinkLength);
 		Collections.sort(links_p);
-		this.minLinkLength = minLinkLength;
-		this.maxLinkLength = maxLinkLength;
+		//set up variables
+		this.minLinkLength = links_s.get(0).getLength();
+		this.maxLinkLength = links_p.get(links_p.size()-1).getLength();
 		this.numPrimaryLinks = numPrimaryLinks;
 		this.phi=phi;
 		this.exp = exp;
-		this.max_rad = Math.pow((path_loss*power)/(sigma*noise),1/exp);
+		this.max_rad = Math.pow((path_loss*power)/(sigma*noise),1.0/exp);
 		this.sigma = sigma;
 		this.power=power;
-		rho_0=1+Math.pow((sigma*(16*1.202+8*Math.pow(Math.PI,4)/90-6)/phi),1/exp);
+		rho_0=1+Math.pow((sigma*(16*1.202+8*Math.pow(Math.PI,4)/90-6)/phi),1.0/exp);
 	}
 	
 	//run all of the algorithms
@@ -222,17 +224,19 @@ public class Simulation {
 	//calculate a bound on phi
 	public double calcPhi() {
 		double top = 1 - Math.pow((1.0*maxLinkLength/max_rad),exp);
-		double bot = 1- Math.pow(1/max_rad,exp);
-		double f = Math.pow(top/bot, 1/exp)*Math.pow(maxLinkLength,-1);
-		double q = Math.pow(24*sigma/(exp-2), 1/(exp-2));
+		double bot = 1- Math.pow(1.0*minLinkLength/max_rad,exp);
+		double f = Math.pow(top/bot, 1.0/exp)*minLinkLength/maxLinkLength;
+		double q = Math.pow(24*sigma/(exp-2), 1.0/(exp-2));
 		
 		//if this is true return the minimum of phi and the bound on phi
-		if (Math.pow(f, -2/(exp-2))>numPrimaryLinks) {
+		if (Math.pow(f, -2.0/(exp-2))>Math.pow(numPrimaryLinks,1.0/exp)) {
 			double phi_max = sigma*(16*1.202 +8*Math.pow(Math.PI,4)/90 - 6);
-			double middle = (Math.pow(f, -2/(exp-2))/Math.pow(numPrimaryLinks, 1/exp)-1)/(1-f/Math.pow(numPrimaryLinks, 1/exp));
+			double middle = (Math.pow(f, -2.0/(exp-2))/Math.pow(numPrimaryLinks, 1.0/exp)-1)/(1-f/Math.pow(numPrimaryLinks, 1.0/exp));
 			double middle2 = Math.pow(q/1.5*middle, (exp-2)/exp)-1;
 			phi_max = phi_max*Math.pow(middle2, -exp);
-			return phi_max;
+			//System.out.println(phi_max);
+			if (phi_max<phi) return phi_max;
+			return phi;
 		}
 		
 		//if not true return phi
@@ -247,21 +251,29 @@ public class Simulation {
 		//set up variables
 		Link a;
 		double rho;
-		double rho_s = 1+(rho_0-1)/Math.pow(1-Math.pow(minLinkLength/max_rad,exp),1/exp);
-		//store actual value of phi to set the one needed for this algorithm
+		//store actual value of phi and rho to set the one needed for this algorithm
+		double rho_0_int = rho_0;
 		double phi_int = phi;
+		//calc intermediate varaibles
 		phi = calcPhi();
+		rho_0=1+Math.pow((sigma*(16*1.202+8*Math.pow(Math.PI,4)/90-6)/phi),1.0/exp);
+		double rho_s = 1+(rho_0-1)/Math.pow(1-Math.pow(minLinkLength/max_rad,exp),1.0/exp);
+		//System.out.println("minlength: "+minLinkLength);
+		//System.out.println("maxlength: "+maxLinkLength);
+		//System.out.println("phi: "+phi);
+		//System.out.println("rho_s: " + rho_s);
 		//System.out.println("rho_s: "+rho_s);
 		for (Link primaryLink: links_p) {
 			//calculate c
 			double c = 24*sigma*Math.pow(primaryLink.getLength(),exp);
-			c/=((exp-2)*(1-Math.pow(primaryLink.getLength()/max_rad,exp))*Math.pow(rho_s,exp));
-			c = Math.ceil(Math.pow(c,1/(exp-2))+0.5);
+			c/=((exp-2)*(1-Math.pow(primaryLink.getLength()/max_rad,exp))*Math.pow(rho_s*minLinkLength,exp));
+			c = Math.ceil(Math.pow(c,1.0/(exp-2))+0.5);
+			//System.out.println("c: "+c);
 			//System.out.println("Link length: "+primaryLink.getLength()+", C: "+c+", rho: "+rho_s+", C*rho_s: "+c*rho_s);
 			//removal of links in c*rho
 			ArrayList<Link> S_1 = new ArrayList<Link>();
 			for (Link l: links_s) {
-				if (primaryLink.getSender().distanceToOtherNode(l.getSender())<c*rho_s) S_1.add(l);
+				if (primaryLink.getSender().distanceToOtherNode(l.getSender())<c*rho_s*minLinkLength) S_1.add(l);
 			}
 			for(Link l: S_1) {
 				links_s.remove(l);
@@ -281,18 +293,19 @@ public class Simulation {
 			a=links_s.get(0);
 			links_s.remove(0);
 			selected_links.add(a);
-			rho = 1+(rho_0-1)/Math.pow(1-Math.pow(a.getLength()/max_rad,exp),1/exp);
+			rho = 1+(rho_0-1)/Math.pow(1-Math.pow(a.getLength()/max_rad,exp),1.0/exp);
 			links_s = firstRemoval(links_s, a, rho);
 			links_s = secondRemoval(links_s, selected_links, links_p.get(0), a, false);
 		}
-		//set phi back to what is actually is without bounds from this algorithm
+		//set phi and rho back to what is actually is without bounds from this algorithm
 		phi = phi_int;
+		rho_0 = rho_0_int;
 		return selected_links;
 	}
 	
 	//calculates rho
 	double calcrho(Link a) {
-		return 1+(rho_0-1)/Math.pow(1-Math.pow(a.getLength()/max_rad,exp),1/exp);
+		return 1+(rho_0-1)/Math.pow(1-Math.pow(a.getLength()/max_rad,exp),1.0/exp);
 	}
 	
 	//algorithm with primary link
@@ -565,7 +578,7 @@ public class Simulation {
 
 	public static void main(String[] args) {
 		//FIX R EQUATION
-		Simulation s = new Simulation(10, 100, 1000, 10000, 0.5, 4, 16, 20);
+		Simulation s = new Simulation(10, 100, 1000, 10000, 0.47, 4, 16, 20);
 		s.run();
 		System.out.println("Algorithm C size: " + s.getAlgorithmC().size());
 		System.out.println("Algorithm PLMISL size: " + s.getAlgorithmPLMISL().size());
