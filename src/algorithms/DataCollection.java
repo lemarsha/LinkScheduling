@@ -40,13 +40,13 @@ public class DataCollection {
 	}
 	
 	public void CollectData_Base() {
-		int minLinkLength = 1000, maxLinkLength = 10000;
+		int minLinkLength = 1000, maxLinkLength = 5000;
 		double phi=0.5, exp=4, sigma=16, power=20;
 		
 		//open the file to write to
 		PrintWriter writer;
 		try {
-			writer = new PrintWriter("results2.txt", "UTF-8");
+			writer = new PrintWriter("results3.txt", "UTF-8");
 		} catch (FileNotFoundException | UnsupportedEncodingException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

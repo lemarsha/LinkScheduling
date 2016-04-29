@@ -112,7 +112,7 @@ public class TestSimulation {
 	@Test
 	public void testIndependent_C() {
 		//just one primary link
-		Simulation s = new Simulation(1, 100, minlen, maxlen, 0.5, 4, 16, 0.2);
+		Simulation s = new Simulation(1, 100, 1000, 10000, 0.47, 4, 16, 20);
 		s.runC();
 		Set<Link> selected_links = s.getAlgorithmC();
 		System.out.println("Algorithm C size: " + selected_links.size());
@@ -132,7 +132,7 @@ public class TestSimulation {
 		}
 		
 		//more than one primary link
-		s = new Simulation(10, 100, minlen, maxlen, 0.5, 4, 16, 0.2);
+		s = new Simulation(10, 100, 1000, 10000, 0.47, 4, 16, 20);
 		s.runC();
 		selected_links = s.getAlgorithmC();
 		System.out.println("Algorithm C size: " + selected_links.size());
@@ -157,7 +157,7 @@ public class TestSimulation {
 	@Test
 	public void testIndependent_PLMISL() {
 		//just one primary link
-		Simulation s = new Simulation(1, 100, minlen, maxlen, 0.5, 4, 16, 0.2);
+		Simulation s = new Simulation(1, 100, 1000, 10000, 0.47, 4, 16, 20);
 		s.runPLMISL();
 		Set<Link> selected_links = s.getAlgorithmPLMISL();
 		System.out.println("Algorithm PLMISL size: " + selected_links.size());
@@ -177,7 +177,7 @@ public class TestSimulation {
 		}
 		
 		//more than one primary link
-		s = new Simulation(10, 100, minlen, maxlen, 0.5, 4, 16, 0.2);
+		s = new Simulation(10, 100, 1000, 10000, 0.47, 4, 16, 20);
 		s.runPLMISL();
 		selected_links = s.getAlgorithmPLMISL();
 		System.out.println("Algorithm PLMISL size: " + selected_links.size());
@@ -202,7 +202,7 @@ public class TestSimulation {
 	@Test
 	public void testIndependent_Tolerance() {
 		//just one primary link
-		Simulation s = new Simulation(1, 100, minlen, maxlen, 0.5, 4, 16, 0.2);
+		Simulation s = new Simulation(1, 100, 1000, 10000, 0.47, 4, 16, 20);
 		s.runTolerance();
 		Set<Link> selected_links = s.getAlgorithmTolerance();
 		System.out.println("Algorithm Tolerance size: " + selected_links.size());
@@ -222,7 +222,7 @@ public class TestSimulation {
 		}
 		
 		//more than one primary link
-		s = new Simulation(10, 100, minlen, maxlen, 0.5, 4, 16, 0.2);
+		s = new Simulation(10, 100, 1000, 10000, 0.47, 4, 16, 20);
 		s.runTolerance();
 		selected_links = s.getAlgorithmTolerance();
 		System.out.println("Algorithm Tolerance size: " + selected_links.size());
@@ -247,7 +247,7 @@ public class TestSimulation {
 	@Test
 	public void testIndependent_Matrix() {
 		//just one primary link
-		Simulation s = new Simulation(1, 100, minlen, maxlen, 0.5, 4, 16, 0.2);
+		Simulation s = new Simulation(1, 100, 1000, 10000, 0.47, 4, 16, 20);
 		s.runMatrix();
 		Set<Link> selected_links = s.getAlgorithmMatrix();
 		System.out.println("Algorithm Matrix size: " + selected_links.size());
@@ -266,7 +266,7 @@ public class TestSimulation {
 		}
 		
 		//more than one primary link
-		s = new Simulation(10, 100, minlen, maxlen, 0.5, 4, 16, 0.2);
+		s = new Simulation(10, 100, 1000, 10000, 0.47, 4, 16, 20);
 		s.runMatrix();
 		selected_links = s.getAlgorithmMatrix();
 		System.out.println("Algorithm Matrix size: " + selected_links.size());

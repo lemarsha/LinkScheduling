@@ -388,20 +388,21 @@ public class Simulation {
 		for (Link l: links_s) {
 			l.setTolerance(powerOfLink(l.getSender(), l.getReceiver())/sigma-noise);
 			//decrement tolerance by interference of primary links
-			for (Link p: links_p) {
-				l.decrementTolerance(powerOfLink(p.getSender(), l.getReceiver()));
-			}
+			//should only need to decrement by the one sender of the primary link
+			l.decrementTolerance(powerOfLink(links_p.get(0).getSender(),l.getReceiver()));
 			//remove link if tolerance is less than 0
 			if (l.getTolerance()<0) {
 				removals.add(l);
 			}
 		}
 		//remove links whose tolerance is less than 0
-		for (Link l: removals) links_s.remove(l);
+		links_s.removeAll(removals);
 		
 		//pick links while there are still feasible links
 		while (links_s.size()!=0) {
 			removals.clear();
+			
+			
 			//remove links that aren't feasible
 			for (Link l: links_s) {
 				for (Link s: selected_links) {
@@ -413,7 +414,7 @@ public class Simulation {
 				}
 			}
 			//remove links that aren't feasible
-			for (Link l: removals) links_s.remove(l);
+			links_s.removeAll(removals);
 			removals.clear();
 			if (links_s.size()<=0) break;
 			//pick link with highest max tolerance/max interference ratio
@@ -435,6 +436,8 @@ public class Simulation {
 			}
 			//remove link from list
 			links_s.remove(current_link);
+			
+			
 			//decrement tolerance of secondary links
 			for (Link l: links_s) {
 				l.decrementTolerance(powerOfLink(current_link.getSender(),l.getReceiver()));
@@ -578,7 +581,7 @@ public class Simulation {
 
 	public static void main(String[] args) {
 		//FIX R EQUATION
-		Simulation s = new Simulation(10, 100, 1000, 10000, 0.47, 4, 16, 20);
+		Simulation s = new Simulation(10, 100, 1000, 5000, 0.47, 4, 16, 20);
 		s.run();
 		System.out.println("Algorithm C size: " + s.getAlgorithmC().size());
 		System.out.println("Algorithm PLMISL size: " + s.getAlgorithmPLMISL().size());
