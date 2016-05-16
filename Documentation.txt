@@ -1,0 +1,111 @@
+﻿Link Scheduling Research Simulation Code Documentation
+
+Node Class
+Object to represent a node of a link.  Has an x and y value as well as a scalar in the event that scaling is necessary.  
+
+distanceToOtherNode 
+Calculates the distance to another node from itself.  Uses the shortest path, euclidian distance.
+scale
+Used in the event that scaling is necessary, will scale the x and y coordinates by the specified constant.
+draw
+Used to draw the node if visual representation is used.
+
+Link Class
+Object to represent a link.  Contains two nodes, the sender and the receiver, and a length.  Also has a tolerance variable to hold how much interference it can handle and a maxInterference variable to hold how much interference that node has on the nodes in the output set.  The booleans selected and isPrimaryLink are used for display purposes so that they may be drawn in a different color in the visualization.
+
+decrementTolerance
+Takes a tolerance that a different sender has on the link and subtracts that from the tolerance that the link has.
+draw
+Draws the link in different colors depending on if it has been selected or if it is a primary link.
+
+Simulation Class
+All of the algorithm simulation is done in these classes. 
+senders_s: senders of the secondary links
+sender_p: sender of the primary links
+links_s: secondary links
+links_p: primary links
+Phi: value used in wan's paper
+exp: path loss exponent
+max_rad: maximum radius that a link may transmit a signal without noise
+sigma: threshold 
+power: power of sender
+noise: ambient noise
+path_loss: path loss constant
+rho_0: the rho constant from wan's paper
+minLinkLength: the minimum length a link may be
+maxLinkLength: the maximum length a link may be
+algorithmC, algorithmPLMISL, algorithmTolerance, algorithmMatrix: the output sets of the links that are scheduled by the various algorithms
+
+run
+runs all of the different algorithms
+runC
+runs the CMAX algorithm
+algorithmPLMISL
+runs the adjusted wan's algorithm (not used in results b/c performance)
+algorithmTolerance
+runs the GAMC algorithm
+algorithmMatrix
+runs the maxtix algorithm (not used in results b/c performance)
+
+generateNodes
+generates random nodes for secondary link senders
+generatePrimaryNode
+generates the sender node for the primary links
+generateLinks(arraylist<node> nodes, int minLinkLength, int maxLinkLength)
+generates random receiving nodes and links for the sending nodes for the secondary links
+generateLinks(node node, int minLinkLength, int maxLinkLength)
+generates random receiving nodes and links for the sender node for the primary links
+
+relativeInterference(set<Link> selected_links, Link a)
+determines the relative interference that a set of selected links has on a link a
+relativeInterference(Node w, Link a)
+determines the relative interference that a sender w has on a link a
+firstRemoval
+determines which nodes cannot be scheduled and should be removed based on the first removal in wan's algorithm
+secondRemoval
+determines which nodes cannot be scheduled and should be removed based on the first removal in wan's algorithm
+calcPhi
+used to determine whether there is a bound on phi. If the bound on phi is less than the optimal value of phi then that value of phi is returned, otherwise the original value of phi is returned. Used in CMAX algorithm.
+calcRho
+calculates the constant rho
+powerOfLink
+determines the power that a receiver receives from a sender.
+FindRemoval_rc, findRemoval_r, findRemoval_c
+Helper functions for the matrix algorithm.
+
+algorithmC
+performs the CMAX algorithm.  Initializes all of the constants and then loops over the primary links and schedules each one.  As each primary link is scheduled, all of the links that are within the w radius of that link are removed.  After the primary links are scheduled the secondary links are scheduled.  The smallest one is chosen and then two removals are performed after that.  That continues until the set is empty.  The ouput set is returned.
+algorithmPLMISL
+This algorithm was not used in the results because the performance was always worse than the tolerance algorithm.  
+algorithmTolerance
+performs the GAMC algorithm.  First it loops over the primary links and adds them to the output set.  Next the tolerance of the secondary links are set and then decremented by the interference of the primary link sender.  If any of the tolerances drop below zero then they are removed.  Next the maximum interference that each of the secondary links has is determined.
+If any of the secondary links interfere too much with a primary link then they are removed.  Then the links are scheduled based on which has the highest MTIR ratio and which are feasible.  Once a link is scheduled then the tolerances of the primary links and secondary links are decremented.  If any of the secondary link tolerances fall below zero then they are removed.
+algorithmMatrix
+This algorithm was not used in the results because the performance was always worse than the tolerance algorithm.
+
+TestSimulation Class
+This class runs tests to ensure that all of the functions in the simulation class are operating correctly.
+
+testSecondaryLinkGeneration
+tests to make sure that all secondary links are within the bounds of the field and that their lenghts are within bounds.
+testPrimaryLinkGeneration
+tests to make sure that all primary links are within the bounds of the field and that their lenghts are within bounds.
+testIndependent_C, testIndependent_PLMISL, testIndependent_Tolerance, testIndependend_Matrix
+tests to make sure that all of the ouput sets generated by the algorithms are in fact independent
+
+
+DataCollection Class
+This class is used to run simulations of all of the different algorithms with different values of primary links, secondary links, and max link length.  It performs 1000 iterations of each combination and then saves the results in output files.
+
+CollectData_Base
+collects all of the data and prints it to a file.  Collects the average, min, and max links selected for each algorithm.  Collects the average, min, and max computation time for each algorithm.
+
+Board Class
+This class may be used to display the results of the simulation if desired.  This class is the Jpanel for the  Jframe.  Paints all of the nodes and links.
+
+Display Class
+This class may be used to display the results of the simulation file if desired.  This class is the Jframe.  Has key listener to determine which algorithm to run.  
+a = run CMAX algorithm
+s = run PLMISL algorithm (not used in results)
+d = run GAMC algorithm
+f = run Matrix algorithm (not used in results)
