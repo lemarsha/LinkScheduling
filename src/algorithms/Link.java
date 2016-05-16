@@ -10,6 +10,7 @@ public class Link implements Comparable {
 	private boolean selected = false;
 	private boolean isPrimaryLink = false;
 	private double tolerance;
+	private double maxInterference=-1;
 	
 	public Link(Node sender, Node receiver) {
 		this.sender = sender;
@@ -48,6 +49,14 @@ public class Link implements Comparable {
 	
 	public void decrementTolerance(double tolerance) {
 		this.tolerance-=tolerance;
+	}
+	
+	public double getMaxInterference() {
+		return maxInterference;
+	}
+	
+	public void setMaxInterference(double interference) {
+		if (interference>maxInterference) maxInterference=interference;
 	}
 	
 	//draws the link!	

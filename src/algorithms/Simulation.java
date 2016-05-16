@@ -376,13 +376,18 @@ public class Simulation {
 		return power/multiplier;
 	}
 	
+	
+	
 	public Set<Link> algorithmTolerance(ArrayList<Link> links_p, ArrayList<Link> links_s) {
+		
 		Set<Link> selected_links = new HashSet<Link>();
+		
 		//add primary links to selected links and initialize their tolerance
 		for (Link l: links_p) {
 			l.setTolerance(powerOfLink(l.getSender(), l.getReceiver())/sigma-noise);
 			selected_links.add(l);
 		}
+		
 		ArrayList<Link> removals = new ArrayList<Link>();
 		//set the tolerances of all the secondary links
 		for (Link l: links_s) {
@@ -395,47 +400,53 @@ public class Simulation {
 				removals.add(l);
 			}
 		}
+		
 		//remove links whose tolerance is less than 0
 		links_s.removeAll(removals);
+		removals.clear();	
+		
+		//set the maximum interference of all the secondary links
+		for (Link l: links_s) {
+			for (Link s: selected_links) {
+				double interference = powerOfLink(l.getSender(), s.getReceiver());
+				if (interference>s.getTolerance()) removals.add(l);
+				l.setMaxInterference(interference);
+			}
+		}
+		
+		//remove links who interfere too much with the selected links
+		links_s.removeAll(removals);
+		removals.clear();
+		
 		
 		//pick links while there are still feasible links
 		while (links_s.size()!=0) {
 			removals.clear();
-			
-			
-			//remove links that aren't feasible
-			for (Link l: links_s) {
-				for (Link s: selected_links) {
-					double interferenceOfLink = powerOfLink(l.getSender(),s.getReceiver());
-					if (interferenceOfLink>s.getTolerance()) {
-						removals.add(l);
-						continue;
-					}
-				}
-			}
-			//remove links that aren't feasible
-			links_s.removeAll(removals);
-			removals.clear();
-			if (links_s.size()<=0) break;
+
 			//pick link with highest max tolerance/max interference ratio
 			Link current_link = links_s.get(0);
 			double max_ratio = -1;
 			for (Link l: links_s) {
-				//find maximum interference
-				double max_interference = -1;
-				for (Link s: selected_links) {
-					double interference = powerOfLink(l.getSender(),s.getReceiver());
-					if (interference>max_interference) max_interference=interference;
-				}
-				//calculate the ratio and see if it is the maximum
-				double ratio = l.getTolerance()/max_interference;
+				double ratio = l.getTolerance()/l.getMaxInterference();
 				if (ratio>max_ratio) {
+					max_ratio = ratio;
 					current_link = l;
-					max_ratio=ratio;
 				}
 			}
+			
+			//check if the link is feasible, if it isn't remove and continue loop
+			boolean feasible = true;
+			for (Link s: selected_links) {
+				double interference = powerOfLink(current_link.getSender(), s.getReceiver());
+				if (interference>s.getTolerance()) {
+					feasible = false;
+					break;
+				}
+			}
+			
 			//remove link from list
 			links_s.remove(current_link);
+			if (!feasible) continue;
 			
 			
 			//decrement tolerance of secondary links
@@ -449,15 +460,15 @@ public class Simulation {
 			for (Link l: selected_links) {
 				interference+=powerOfLink(l.getSender(),current_link.getReceiver());
 				l.decrementTolerance(powerOfLink(current_link.getSender(),l.getReceiver()));
-				if (l.getTolerance()<0) System.out.println("WTF");
 			}
-			if (interference>powerOfLink(current_link.getSender(),current_link.getReceiver())) System.out.println("WTF2");
 			selected_links.add(current_link);
 
 		}
 		
 		return selected_links;
 	}
+	
+	
 	
 	//finds the link that should be removed based on row+col
 	public int findRemoval_rc(double[][] matrix, int psize) {
@@ -581,7 +592,7 @@ public class Simulation {
 
 	public static void main(String[] args) {
 		//FIX R EQUATION
-		Simulation s = new Simulation(10, 100, 1000, 5000, 0.47, 4, 16, 20);
+		Simulation s = new Simulation(10, 100, 1000, 10000, 0.47, 4, 16, 20);
 		s.run();
 		System.out.println("Algorithm C size: " + s.getAlgorithmC().size());
 		System.out.println("Algorithm PLMISL size: " + s.getAlgorithmPLMISL().size());
